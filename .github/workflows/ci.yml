@@ -2,14 +2,7 @@ name: ci
 
 on:
   # Callable from the release workflow, so a release runs exactly these checks.
-  workflow_call:
-    inputs:
-      run-contract-tests:
-        description: >-
-          Also run the live Zenodo contract tests. The release workflow sets
-          this, so a release is gated on the tool working against real Zenodo.
-        type: boolean
-        default: false
+  workflow_call: {}
   pull_request:
     branches:
       - main
@@ -97,19 +90,19 @@ jobs:
 
   contract:
     name: contract tests against live Zenodo
-    # Always runs, but only counts where its answer gates something.
+    # Always runs, but only counts where nothing else depends on the answer.
     #
-    # Advisory on pull requests and pushes: a Zenodo outage, or a rate limit
-    # hit on a shared runner address, must not be able to fail somebody's
-    # change. It still runs there, because a query built wrong should surface
-    # on the change that caused it rather than a week later on the schedule.
+    # Advisory on pull requests, pushes and releases: a Zenodo outage, or a
+    # rate limit hit on a shared runner address, must not be able to fail
+    # somebody's change or hold up a release. It still runs there, because a
+    # query built wrong should surface on the change that caused it rather
+    # than a week later on the schedule.
     #
-    # Blocking on the weekly drift check, on demand, and on a release, where
-    # the whole point is that the answer decides something.
+    # Blocking on the weekly drift check and on demand, where reporting the
+    # failure is the entire purpose of the run.
     continue-on-error: >-
       ${{ !(github.event_name == 'schedule'
-            || github.event_name == 'workflow_dispatch'
-            || inputs.run-contract-tests) }}
+            || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-24.04
     # Retries with backoff make an unreachable Zenodo slow rather than quick.
     timeout-minutes: 15
