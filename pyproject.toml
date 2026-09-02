@@ -49,6 +49,9 @@ fallback-version = "0.0.0"
 [dependency-groups]
 dev = [
     "pre-commit>=4.0",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "responses>=0.25",
 ]
 
 [tool.ruff]
@@ -141,7 +144,7 @@ convention = "google"
 
 [tool.mypy]
 python_version = "3.11"
-files = ["src"]
+files = ["src", "tests"]
 namespace_packages = true
 ignore_missing_imports = false
 check_untyped_defs = true
@@ -153,3 +156,22 @@ no_implicit_reexport = true
 strict_equality = true
 warn_redundant_casts = true
 warn_unused_ignores = false
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config -m 'not network'"
+markers = [
+    "network: hits the live Zenodo API; deselected by default, run with -m network",
+]
+
+[tool.coverage.run]
+source = ["src/zenodo_bibtex_exporter"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]
