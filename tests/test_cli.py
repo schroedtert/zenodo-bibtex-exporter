@@ -127,10 +127,10 @@ def test_unreachable_zenodo_exits_5(capsys: pytest.CaptureFixture[str]) -> None:
 
 @responses.activate
 def test_unexpected_errors_exit_1(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
-    def boom(_raw: str) -> str:
+    def boom(*_args: object, **_kwargs: object) -> object:
         raise RuntimeError("boom")
 
-    monkeypatch.setattr("zenodo_bibtex_exporter.cli.normalize_concept_id", boom)
+    monkeypatch.setattr("zenodo_bibtex_exporter.cli.resolve", boom)
 
     assert main([CONCEPT_ID, "--latest"]) == 1
     captured = capsys.readouterr()

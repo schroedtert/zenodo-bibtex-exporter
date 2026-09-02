@@ -14,9 +14,9 @@ import sys
 from typing import TYPE_CHECKING
 
 from . import __version__
+from .api import resolve
 from .exceptions import ZenodoBibtexError
-from .identifiers import normalize_concept_id
-from .zenodo import DEFAULT_BASE_URL, Record, ZenodoClient
+from .zenodo import DEFAULT_BASE_URL, DEFAULT_RETRIES, DEFAULT_TIMEOUT, ZenodoClient
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -73,14 +73,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--timeout",
         type=float,
-        default=10.0,
-        help="Per-request timeout in seconds (default: 10).",
+        default=DEFAULT_TIMEOUT,
+        help=f"Per-request timeout in seconds (default: {DEFAULT_TIMEOUT:g}).",
     )
     parser.add_argument(
         "--retries",
         type=int,
-        default=3,
-        help="Attempts for retryable failures (default: 3).",
+        default=DEFAULT_RETRIES,
+        help=f"Attempts for retryable failures (default: {DEFAULT_RETRIES}).",
     )
 
     verbosity = parser.add_mutually_exclusive_group()
@@ -146,13 +146,6 @@ def _configure_logging(*, verbose: int, quiet: bool) -> None:
     )
 
 
-def _resolve(client: ZenodoClient, concept_id: str, version: str | None) -> Record:
-    """Resolve the requested version to a single Zenodo record."""
-    if version is None:
-        return client.latest_record(concept_id)
-    return client.record_for_version(concept_id, version)
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command line interface.
 
@@ -166,15 +159,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     _configure_logging(verbose=args.verbose, quiet=args.quiet)
 
     try:
-        concept_id = normalize_concept_id(args.concept_id)
         client = ZenodoClient(
             base_url=args.base_url,
             timeout=args.timeout,
             retries=args.retries,
             token=os.environ.get("ZENODO_TOKEN"),
         )
-        record = _resolve(client, concept_id, args.version)
-        logger.info("Resolved concept %s to record %s (version %s).", concept_id, record.record_id, record.version)
+        record = resolve(args.concept_id, version=args.version, client=client)
+        logger.info(
+            "Resolved concept %s to record %s (version %s).",
+            record.concept_id,
+            record.record_id,
+            record.version,
+        )
         entry = client.bibtex(record.record_id)
     except ZenodoBibtexError as error:
         logger.error("%s", error)

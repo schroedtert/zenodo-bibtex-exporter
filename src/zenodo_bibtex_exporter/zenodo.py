@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL: Final = "https://zenodo.org/api"
 BIBTEX_MEDIA_TYPE: Final = "application/x-bibtex"
+DEFAULT_TIMEOUT: Final = 10.0
+DEFAULT_RETRIES: Final = 3
 
 #: Responses worth trying again. A 404 is a definitive answer and is never retried.
 RETRYABLE_STATUS: Final = frozenset({429, 500, 502, 503, 504})
@@ -46,8 +48,8 @@ class ZenodoClient:
         self,
         *,
         base_url: str = DEFAULT_BASE_URL,
-        timeout: float = 10.0,
-        retries: int = 3,
+        timeout: float = DEFAULT_TIMEOUT,
+        retries: int = DEFAULT_RETRIES,
         backoff: float = 1.0,
         token: str | None = None,
         session: requests.Session | None = None,
