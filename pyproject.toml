@@ -142,6 +142,10 @@ known-first-party = ["zenodo_bibtex_exporter"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.pylint]
+## The Zenodo client takes its configuration as keyword-only arguments.
+max-args = 10
+
 [tool.mypy]
 python_version = "3.11"
 files = ["src", "tests"]
