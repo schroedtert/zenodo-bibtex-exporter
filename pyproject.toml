@@ -26,6 +26,9 @@ dependencies = [
     "requests>=2.32,<3.0",
 ]
 
+[project.scripts]
+zenodo-bibtex = "zenodo_bibtex_exporter.cli:main"
+
 [project.urls]
 homepage = "https://github.com/schroedtert/zenodo-bibtex-exporter"
 repository = "https://github.com/schroedtert/zenodo-bibtex-exporter"
@@ -172,6 +175,8 @@ markers = [
 [tool.coverage.run]
 source = ["src/zenodo_bibtex_exporter"]
 branch = true
+## Exercised by a subprocess test, which coverage cannot see.
+omit = ["*/__main__.py"]
 
 [tool.coverage.report]
 show_missing = true
