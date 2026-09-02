@@ -1,0 +1,47 @@
+[project]
+name = "zenodo-bibtex-exporter"
+dynamic = ["version"]
+authors = [{ name = "Tobias Schrödter" }]
+description = "Export BibTeX citation information from Zenodo records."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing :: Markup :: LaTeX",
+]
+dependencies = [
+    "requests>=2.32,<3.0",
+]
+
+[project.urls]
+homepage = "https://github.com/schroedtert/zenodo-bibtex-exporter"
+repository = "https://github.com/schroedtert/zenodo-bibtex-exporter"
+issues = "https://github.com/schroedtert/zenodo-bibtex-exporter/issues"
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zenodo_bibtex_exporter"]
+
+[tool.uv-dynamic-versioning]
+style = "pep440"
+pattern = "default"
+fallback-version = "0.0.0"
