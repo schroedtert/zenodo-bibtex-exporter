@@ -1,0 +1,79 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  # Exactly the pull request pipeline, not a copy of it that can drift.
+  # It also produces the distributions that the publish job uploads: a called
+  # workflow runs as part of this run, so its artifacts are visible here.
+  ci:
+    name: ci
+    uses: ./.github/workflows/ci.yml
+
+  publish-pypi:
+    name: publish to PyPI
+    needs: ci
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/zenodo-bibtex-exporter
+    permissions:
+      # Trusted publishing mints a short lived token from this, so there is no
+      # PyPI API token stored in the repository.
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Verify the built version matches the tag
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          echo "Tag ${GITHUB_REF_NAME} implies version ${version}"
+          ls -1 dist/
+
+          matched=""
+          for candidate in "dist/zenodo_bibtex_exporter-${version}"-*.whl \
+                           "dist/zenodo_bibtex_exporter-${version}.tar.gz"; do
+            if [ -e "${candidate}" ]; then
+              matched="yes"
+            fi
+          done
+
+          if [ -z "${matched}" ]; then
+            echo "::error::Built distributions do not carry version ${version}."
+            echo "::error::A shallow checkout or a missing tag makes the build fall back to 0.0.0."
+            exit 1
+          fi
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.14.2
+
+  github-release:
+    name: create GitHub release
+    needs: publish-pypi
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3.0.3
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

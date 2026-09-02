@@ -1,0 +1,41 @@
+version: 2
+updates:
+  # uv rather than pip: this project is locked, and the uv ecosystem updates
+  # uv.lock alongside pyproject.toml. CI runs with UV_FROZEN, so a bump that
+  # touched only pyproject.toml would fail every pull request it opened.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+    allow:
+      - dependency-type: "all"
+    commit-message:
+      prefix: "chore"
+
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      pre-commit-dependencies:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - "*"
+    allow:
+      - dependency-type: "all"
+    commit-message:
+      prefix: "ci"

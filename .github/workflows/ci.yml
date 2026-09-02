@@ -1,0 +1,158 @@
+name: ci
+
+on:
+  # Callable from the release workflow, so a release runs exactly these checks.
+  workflow_call: {}
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  schedule:
+    # Sundays at 02:00 UTC. The point of this run is the contract job below.
+    - cron: '0 2 * * 0'
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  UV_FROZEN: '1'
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Run pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    name: test ${{ matrix.python-version }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Every supported Python on one platform, because version differences
+        # are where the risk actually is: the code has no platform specific
+        # branches, no file paths and no subprocesses.
+        os:
+          - ubuntu-24.04
+        python-version:
+          - '3.11'
+          - '3.12'
+          - '3.13'
+          - '3.14'
+        include:
+          # One job each on macOS and Windows. What these guard is the console
+          # encoding and the certificate store, neither of which varies by
+          # Python version, so a full cross product would buy nothing.
+          - os: macos-15
+            python-version: '3.14'
+          - os: windows-latest
+            python-version: '3.14'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the project
+        run: uv sync
+
+      # The network marked tests are deselected by default, so this job never
+      # depends on Zenodo being reachable.
+      - name: Run tests
+        run: uv run pytest --cov --cov-report=term-missing
+
+  contract:
+    name: contract tests against live Zenodo
+    # Always runs, but only counts where nothing else depends on the answer.
+    #
+    # Advisory on pull requests, pushes and releases: a Zenodo outage, or a
+    # rate limit hit on a shared runner address, must not be able to fail
+    # somebody's change or hold up a release. It still runs there, because a
+    # query built wrong should surface on the change that caused it rather
+    # than a week later on the schedule.
+    #
+    # Blocking on the weekly drift check and on demand, where reporting the
+    # failure is the entire purpose of the run.
+    continue-on-error: >-
+      ${{ !(github.event_name == 'schedule'
+            || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    # Retries with backoff make an unreachable Zenodo slow rather than quick.
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Install the project
+        run: uv sync
+
+      - name: Run contract tests
+        run: uv run pytest -m network -v
+
+  build:
+    name: build distributions
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          # uv-dynamic-versioning reads the version from the git tags. Without
+          # the full history the build silently produces a 0.0.0 dev version.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Check the built version is not the fallback
+        run: |
+          ls -l dist/
+          for candidate in dist/zenodo_bibtex_exporter-0.0.0*; do
+            if [ -e "${candidate}" ]; then
+              echo "::warning::Built version fell back to 0.0.0, no reachable git tag."
+              break
+            fi
+          done
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
