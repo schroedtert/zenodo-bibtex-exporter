@@ -1,0 +1,124 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+ENV/
+env/
+
+# uv
+#   Keep uv.lock in version control for applications; uncomment for libraries.
+# uv.lock
+.uv/
+.python-version
+
+# ruff
+.ruff_cache/
+
+# pre-commit
+#   Local hook environments and generated files
+.pre-commit-log
+node_modules/
+
+# pytest / coverage / tox
+.pytest_cache/
+.cache
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+cover/
+*.cover
+*.py,cover
+nosetests.xml
+.hypothesis/
+.benchmarks/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.pyright/
+
+# Sphinx / MkDocs documentation
+docs/_build/
+docs/build/
+/site
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# Cython debug symbols
+cython_debug/
+
+# VS Code
+#   Share the project-level configuration, ignore everything else.
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+*.vsix
+*.code-workspace
+
+# PyCharm / JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea_modules/
+atlassian-ide-plugin.xml
+
+# Other editors / tools
+.ropeproject
+.spyderproject
+.spyproject
+
+# OS files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# Logs and local databases
+*.log
+*.sqlite3
+*.sqlite3-journal
